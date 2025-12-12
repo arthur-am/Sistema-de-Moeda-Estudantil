@@ -3,12 +3,10 @@ function capitalize(text: string) {
 }
 
 export function formatCPF(cpf: string) {
-    // Exemplo de uso do capitalize para padronizar algum texto, se necessário
     return cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
 }
 
 export function formatCurrency(value: number | string) {
-    // Exemplo de uso do capitalize para padronizar a palavra moeda
     return `${Number(value).toFixed(0)} ${capitalize('moeda')}${Number(value) !== 1 ? 's' : ''}`;
 }
 
