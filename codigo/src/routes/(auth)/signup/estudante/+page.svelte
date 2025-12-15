@@ -3,6 +3,7 @@
 	import { inserirAluno } from '$lib/client/controller/aluno.remote';
 	import type { PageProps } from './$types';
 	import { authClient } from '$lib/client/auth-client';
+	import { alunoSchema } from '$lib/shared/schemas/aluno';
 	import { goto } from '$app/navigation';
 	import { Eye, EyeOff, Mail, Lock, User, AlertCircle, CheckCircle } from '@lucide/svelte';
 	import { toast } from 'svelte-sonner';
@@ -67,7 +68,20 @@
 	async function handleSubmit() {
 		const validConfirmPassword = validateConfirmPassword();
 
+		// client-side validation (shape + CPF formatting) before calling auth
+		const validation = alunoSchema.safeParse({
+			cpf: formData.cpf,
+			curso: formData.curso,
+			endereco: formData.endereco,
+			user_id: '' // will be set by server after auth is created
+		});
+
 		const toastId = toast.loading('Criando sua conta...');
+		if (!validation.success) {
+			toast.error('Dados inválidos: ' + validation.error.errors.map(e => e.message).join(', '), { id: toastId });
+			return;
+		}
+
 		if (validConfirmPassword) {
 			isLoading = true;
 			try {

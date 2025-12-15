@@ -1,14 +1,14 @@
 import { command, query } from '$app/server';
 import { empresaModel } from '$lib/server/db/empresa/model';
 import type { InsertEmpresa } from '$lib/server/db/schema';
-import z from 'zod';
+import { empresaSchema } from '$lib/shared/schemas/empresa';
 
 export const listarEmpresas = query(async () => {
 	return await empresaModel.listar();
 });
 
-export const inserirEmpresa = command(z.custom<InsertEmpresa>(), async (info) => {
-	await empresaModel.criar(info);
+export const inserirEmpresa = command(empresaSchema, async (info) => {
+	await empresaModel.criar(info as any);
 	await listarEmpresas().refresh();
 });
 

@@ -2,14 +2,15 @@ import { command, query } from '$app/server';
 import { alunoModel } from '$lib/server/db/aluno/model';
 import { transacaoModel } from '$lib/server/db/transacao/model';
 import type { InsertAluno } from '$lib/server/db/schema';
-import z from 'zod';
+import { alunoSchema } from '$lib/shared/schemas/aluno';
 
 export const listarAlunos = query(async () => {
 	return await alunoModel.listar();
 });
 
-export const inserirAluno = command(z.custom<InsertAluno>(), async (info) => {
-	await alunoModel.criar(info);
+export const inserirAluno = command(alunoSchema, async (info) => {
+	// server-side validation via Zod schema in the command
+	await alunoModel.criar(info as any);
 	await listarAlunos().refresh();
 });
 

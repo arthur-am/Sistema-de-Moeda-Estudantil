@@ -1,6 +1,7 @@
 <script lang="ts">
 	import AuthLayout from '$lib/client/components/AuthLayout.svelte';
 	import { inserirEmpresa } from '$lib/client/controller/empresa.remote';
+	import { empresaSchema } from '$lib/shared/schemas/empresa';
 	import type { PageProps } from './$types';
 	import { authClient } from '$lib/client/auth-client';
 	import { goto } from '$app/navigation';
@@ -66,7 +67,19 @@
 	async function handleSubmit() {
 		const validConfirmPassword = validateConfirmPassword();
 
+		// client-side validation using shared schema
+		const validation = empresaSchema.safeParse({
+			nome: formData.nome,
+			cnpj: formData.cnpj,
+			user_id: ''
+		});
+
 		const toastId = toast.loading('Criando sua conta...');
+		if (!validation.success) {
+			toast.error('Dados inválidos: ' + validation.error.errors.map(e => e.message).join(', '), { id: toastId });
+			return;
+		}
+
 		if (validConfirmPassword) {
 			isLoading = true;
 			try {

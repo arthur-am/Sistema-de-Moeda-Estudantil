@@ -2,12 +2,17 @@
 import { eq } from 'drizzle-orm';
 import { db } from '..';
 import { alunoT, type InsertAluno, type SelectAluno } from './schema';
-import { user } from '../auth-schema';
+import { createAndAssignRole } from '../db/helpers';
+import { alunoSchema } from '$lib/shared/schemas/aluno';
 
 function validarAlunoInput(info: InsertAluno) {
-	if (!info.cpf || !info.curso || !info.user_id) {
-		throw new Error('CPF, curso e user_id são obrigatórios');
+	const parsed = alunoSchema.safeParse(info);
+	if (!parsed.success) {
+		// Aggregate Zod errors into a single message
+		const message = parsed.error.errors.map((e) => `${e.path.join('.')}: ${e.message}`).join('; ');
+		throw new Error(`Validação inválida: ${message}`);
 	}
+	return parsed.data;
 }
 
 export const alunoModel = {
@@ -24,13 +29,12 @@ export const alunoModel = {
 			where: eq(alunoT.id, id)
 		});
 	},
-	       criar: async (info: InsertAluno) => {
-		       validarAlunoInput(info);
-		       return await db.transaction(async (tx) => {
-			       await tx.insert(alunoT).values(info).returning();
-			       return await tx.update(user).set({ role: 'estudante' }).where(eq(user.id, info.user_id)).returning();
-		       })
-	       },
+		       criar: async (info: InsertAluno) => {
+			       const data = validarAlunoInput(info);
+			       return await db.transaction(async (tx) => {
+				       return await createAndAssignRole(tx, async () => await tx.insert(alunoT).values(data).returning(), data.user_id, 'estudante');
+			       })
+		       },
 	atualizar: async (id: SelectAluno['id'], newInfo: Partial<InsertAluno>) => {
 		return await db.update(alunoT).set(newInfo).where(eq(alunoT.id, id));
 	},

@@ -17,7 +17,7 @@
   
   | 👤 Integrante | 🔧 Refatoração | 🔗 Link do PR |
   |--------------|---------------|----------------|
-    | <a href="https://github.com/arthur-am">Arthur Araujo Mendonca</a> | Extração de Função de Validação |  <a href="https://github.com/pedroseabra27/Sistema-de-Moeda-Estudantil/pull/1">Refatoração 1</a> |
+    | <a href="https://github.com/arthur-am">Arthur Araujo Mendonca</a> | Extração de Função de Validação |  <a href="https://github.com/pedroseabra27/Sistema-de-Moeda-Estudantil/pull/2">Refatoração 1</a> |
     | <a href="https://github.com/betelguelse">Eddie Christian</a> | Centralizar utilitários / formatações | [A definir] |
     | <a href="https://github.com/arthur-am">Arthur Araujo Mendonca</a> | Melhoria de Nomes e Parâmetros | [A definir] |
 
@@ -122,83 +122,57 @@ Melhora a clareza, separação de responsabilidades e facilita testes.
 ---
 
 
-### 2️⃣ Refatoração 2 – Eliminação de Código Duplicado
+### 2️⃣ Refatoração 2 – Centralizar Validação com Zod (Front + Back)
 
-**Arquivo:** `codigo/src/lib/client/utils/index.ts`
+**Arquivos adicionados:**
+- `codigo/src/lib/shared/schemas/aluno.ts`
+- `codigo/src/lib/shared/schemas/empresa.ts`
 
 #### 🔴 Antes
-```typescript
-export function formatCPF(cpf: string) {
-    return cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
-}
-
-export function formatCurrency(value: number | string) {
-    return `${Number(value).toFixed(0)} moeda${Number(value) !== 1 ? 's' : ''}`;
-}
-```
+Validação estava espalhada: `aluno` e `empresa` tinham checagens pontuais (e.g., `if (!info.user_id)`), sem um contrato reutilizável entre frontend e backend. Isso tornava fácil introduzir inconsistências (como validar `nome`/`email` no lugar de `cpf`/`curso`).
 
 #### 🟢 Depois (aplicado)
 ```typescript
-// Centralizar funções de formatação em `src/lib/client/utils`
-export function formatCPF(cpf: string) {
-    return cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
-}
+// src/lib/shared/schemas/aluno.ts
+export const alunoSchema = z.object({ cpf: z.string(), curso: z.string(), endereco: z.string().optional(), user_id: z.string() });
 
-export function formatCurrency(value: number | string) {
-    return `${Number(value).toFixed(0)} moeda${Number(value) !== 1 ? 's' : ''}`;
-}
-
-export function formatDate(dateString: string | Date | undefined) {
-    if (!dateString) return 'N/A';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('pt-BR');
-}
+// src/lib/shared/schemas/empresa.ts
+export const empresaSchema = z.object({ nome: z.string(), cnpj: z.string(), saldo: z.number().optional(), user_id: z.string() });
 ```
 
+Além disso, o frontend agora valida com os mesmos schemas antes de submeter (`signup` pages), e os comandos server-side (`inserirAluno`, `inserirEmpresa`) usam os mesmos schemas como validação inicial. Isso elimina classes de bug por inconsistência e fornece feedback imediato ao usuário.
+
 #### ✔ Tipo de refatoração aplicada
-- **Centralize Utility Functions**
+- **Shared Validation Layer (Zod)**
 
 #### 📝 Justificativa
-Centraliza as funções de formatação úteis para o frontend (CPF, moeda, data), reduzindo duplicidade e evitando mudanças arbitrárias de casing que não tinham justificativa clara.
+Garante um contrato único de validação compartilhado entre frontend e backend, reduz bug-risks, fornece validação imediata no cliente e validação segura no servidor, evitando regressões (ex.: validações inconsistentes como a que validava `nome`/`email`).
 
 ---
 
 
-### 3️⃣ Refatoração 3 – Melhoria de Nomes e Parâmetros
+### 3️⃣ Refatoração 3 – Padronizar Criação com Role + Renomear `criar` → `criarEmpresa`
 
-**Arquivo:** `codigo/src/lib/server/db/empresa/model.ts`
+**Arquivo alterado:** `codigo/src/lib/server/db/empresa/model.ts` (+ helper em `codigo/src/lib/server/db/helpers.ts`)
 
 #### 🔴 Antes
-```typescript
-criar: async (info: InsertEmpresa) => {
-    return await db.transaction(async (tx) => {
-        if (!info.user_id) {
-            throw new Error('user_id is required to create an empresa');
-        }
-        await tx.insert(empresaT).values(info).returning();
-        return await tx.update(user).set({ role: 'empresa' }).where(eq(user.id, info.user_id)).returning();
-    });
-},
-```
+Criações repetiam a mesma sequência: inserir registro X e depois atualizar `user.role` para 'empresa' (ou 'estudante'), com checagens parciais.
 
-#### 🟢 Depois
+#### 🟢 Depois (aplicado)
 ```typescript
-criarEmpresa: async (empresa: InsertEmpresa) => {
-    return await db.transaction(async (tx) => {
-        if (!empresa.user_id) {
-            throw new Error('user_id é obrigatório para criar uma empresa');
-        }
-        await tx.insert(empresaT).values(empresa).returning();
-        return await tx.update(user).set({ role: 'empresa' }).where(eq(user.id, empresa.user_id)).returning();
-    });
-},
+// src/lib/server/db/helpers.ts
+export async function createAndAssignRole(tx, insertFn, userId, role) { /* ... */ }
+
+// src/lib/server/db/empresa/model.ts
+criarEmpresa: async (info: InsertEmpresa) { /* valida via Zod e usa createAndAssignRole */ },
+// alias backward-compatible: criar -> criarEmpresa
 ```
 
 #### ✔ Tipo de refatoração aplicada
-- **Rename Function / Rename Parameter**
+- **Extract Helper + Rename Function**
 
 #### 📝 Justificativa
-Melhora a clareza e expressividade do código, tornando o método e o parâmetro mais descritivos.
+Reduz duplicidade (DRY) ao centralizar o padrão "insert + set role" em um helper reutilizável e torna a API do modelo mais explícita com `criarEmpresa`. Mantivemos uma alias `criar` para compatibilidade, evitando quebrar consumidores existentes.
 
 ---
 
