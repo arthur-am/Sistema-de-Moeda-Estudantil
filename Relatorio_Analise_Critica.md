@@ -17,9 +17,9 @@
   
   | 👤 Integrante | 🔧 Refatoração | 🔗 Link do PR |
   |--------------|---------------|----------------|
-  | <a href="https://github.com/arthur-am">Arthur Araujo Mendonca</a> | Extração de Função de Validação |  <a href="https://github.com/pedroseabra27/Sistema-de-Moeda-Estudantil/pull/1">Refatoração 1</a> |
-  | <a href="https://github.com/betelguelse">Eddie Christian</a> | Eliminação de Código Duplicado | <a href="https://github.com/arthur-am/Sistema-de-Moeda-Estudantil/pull/1">Refatoração 2 |
-  | <a href="https://github.com/pedroqr">Pedro Queiroz</a> | Melhoria de Nomes e Parâmetros | [A definir] |
+    | <a href="https://github.com/arthur-am">Arthur Araujo Mendonca</a> | Extração de Função de Validação |  <a href="https://github.com/pedroseabra27/Sistema-de-Moeda-Estudantil/pull/1">Refatoração 1</a> |
+    | <a href="https://github.com/betelguelse">Eddie Christian</a> | Centralizar utilitários / formatações | [A definir] |
+    | <a href="https://github.com/arthur-am">Arthur Araujo Mendonca</a> | Melhoria de Nomes e Parâmetros | [A definir] |
 
 ---
 
@@ -85,13 +85,15 @@ O projeto utiliza uma arquitetura moderna baseada em **SvelteKit** para o fronte
 
 ### 1️⃣ Refatoração 1 – Extração de Função de Validação
 
-**Arquivo:** `codigo/src/lib/server/aluno/model.ts`
+**Arquivo (canônico):** `codigo/src/lib/server/db/aluno/model.ts`
+
+> Observação: havia um arquivo duplicado em `codigo/src/lib/server/aluno/model.ts` que verificava `nome` e `email` (incorreto). Esse arquivo foi substituído por uma re-exportação para o módulo canônico em `db/aluno/model.ts`.
 
 #### 🔴 Antes
 ```typescript
 export async function criarAluno(dados: AlunoInput) {
-    if (!dados.nome || !dados.email) {
-        throw new Error('Nome e email são obrigatórios');
+    if (!dados.cpf || !dados.curso || !dados.user_id) {
+        throw new Error('CPF, curso e user_id são obrigatórios');
     }
     // ...restante da lógica...
 }
@@ -100,8 +102,8 @@ export async function criarAluno(dados: AlunoInput) {
 #### 🟢 Depois
 ```typescript
 function validarAlunoInput(dados: AlunoInput) {
-    if (!dados.nome || !dados.email) {
-        throw new Error('Nome e email são obrigatórios');
+    if (!dados.cpf || !dados.curso || !dados.user_id) {
+        throw new Error('CPF, curso e user_id são obrigatórios');
     }
 }
 
@@ -135,28 +137,29 @@ export function formatCurrency(value: number | string) {
 }
 ```
 
-#### 🟢 Depois
+#### 🟢 Depois (aplicado)
 ```typescript
-function capitalize(text: string) {
-    return text.charAt(0).toUpperCase() + text.slice(1);
-}
-
+// Centralizar funções de formatação em `src/lib/client/utils`
 export function formatCPF(cpf: string) {
-    // Exemplo de uso do capitalize para padronizar algum texto, se necessário
     return cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
 }
 
 export function formatCurrency(value: number | string) {
-    // Exemplo de uso do capitalize para padronizar a palavra moeda
-    return `${Number(value).toFixed(0)} ${capitalize('moeda')}${Number(value) !== 1 ? 's' : ''}`;
+    return `${Number(value).toFixed(0)} moeda${Number(value) !== 1 ? 's' : ''}`;
+}
+
+export function formatDate(dateString: string | Date | undefined) {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('pt-BR');
 }
 ```
 
 #### ✔ Tipo de refatoração aplicada
-- **Replace Duplicated Code with Method**
+- **Centralize Utility Functions**
 
 #### 📝 Justificativa
-Reduz duplicidade e facilita manutenção, além de centralizar a lógica de capitalização de texto.
+Centraliza as funções de formatação úteis para o frontend (CPF, moeda, data), reduzindo duplicidade e evitando mudanças arbitrárias de casing que não tinham justificativa clara.
 
 ---
 
