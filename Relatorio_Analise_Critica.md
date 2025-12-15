@@ -17,9 +17,9 @@
   
   | 👤 Integrante | 🔧 Refatoração | 🔗 Link do PR |
   |--------------|---------------|----------------|
-    | <a href="https://github.com/arthur-am">Arthur Araujo Mendonca</a> | Extração de Função de Validação |  <a href="https://github.com/pedroseabra27/Sistema-de-Moeda-Estudantil/pull/2">Refatoração 1</a> |
-    | <a href="https://github.com/betelguelse">Eddie Christian</a> | Centralizar utilitários / formatações | [A definir] |
-    | <a href="https://github.com/arthur-am">Arthur Araujo Mendonca</a> | Melhoria de Nomes e Parâmetros | [A definir] |
+    | <a href="https://github.com/arthur-am">Arthur Araujo Mendonca</a> | Criação de Função de Validação (nova) |  <a href="https://github.com/pedroseabra27/Sistema-de-Moeda-Estudantil/pull/2">Refatoração 1</a> |
+    | <a href="https://github.com/betelguelse">Eddie Christian</a> | Centralizar Validação com Zod | [A definir] |
+    | <a href="https://github.com/arthur-am">Arthur Araujo Mendonca</a> | Padronizar Criação com Role (`criarEmpresa`) | [A definir] |
 
 ---
 
@@ -83,13 +83,13 @@ O projeto utiliza uma arquitetura moderna baseada em **SvelteKit** para o fronte
 
 ## 🔧 8. Refatorações Propostas (3 partes do código)
 
-### 1️⃣ Refatoração 1 – Extração de Função de Validação
+### 1️⃣ Refatoração 1 – Criação de Função de Validação (nova)
 
 **Arquivo (canônico):** `codigo/src/lib/server/db/aluno/model.ts`
 
-> Observação: havia um arquivo duplicado em `codigo/src/lib/server/aluno/model.ts` que verificava `nome` e `email` (incorreto). Esse arquivo foi substituído por uma re-exportação para o módulo canônico em `db/aluno/model.ts`.
+> Observação: a validação não existia como função separada anteriormente — havia validações pontuais/inline. Nesta refatoração **criamos** a função `validarAlunoInput` e extraímos a validação inline para consolidar o comportamento.
 
-#### 🔴 Antes
+#### 🔴 Antes (exemplo do comportamento anterior)
 ```typescript
 export async function criarAluno(dados: AlunoInput) {
     if (!dados.cpf || !dados.curso || !dados.user_id) {
@@ -99,7 +99,7 @@ export async function criarAluno(dados: AlunoInput) {
 }
 ```
 
-#### 🟢 Depois
+#### 🟢 Depois (o que a refatoração criou)
 ```typescript
 function validarAlunoInput(dados: AlunoInput) {
     if (!dados.cpf || !dados.curso || !dados.user_id) {
@@ -114,10 +114,10 @@ export async function criarAluno(dados: AlunoInput) {
 ```
 
 #### ✔ Tipo de refatoração aplicada
-- **Extract Function**
+- **Create Function / Extract Validation**
 
 #### 📝 Justificativa
-Melhora a clareza, separação de responsabilidades e facilita testes.
+A criação da função separada melhora a clareza, separação de responsabilidades, facilita testes e padroniza a validação em um único ponto do código.
 
 ---
 
