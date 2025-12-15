@@ -17,9 +17,9 @@
   
   | 👤 Integrante | 🔧 Refatoração | 🔗 Link do PR |
   |--------------|---------------|----------------|
-    | <a href="https://github.com/arthur-am">Arthur Araujo Mendonca</a> | Criação de Função de Validação (nova) |  <a href="https://github.com/pedroseabra27/Sistema-de-Moeda-Estudantil/pull/2">Refatoração 1</a> |
-    | <a href="https://github.com/betelguelse">Eddie Christian</a> | Centralizar Validação com Zod | [A definir] |
-    | <a href="https://github.com/arthur-am">Arthur Araujo Mendonca</a> | Padronizar Criação com Role (`criarEmpresa`) | [A definir] |
+    | <a href="https://github.com/arthur-am">Arthur Araujo Mendonca</a> | Criação de Função de Validação (nova) |  <a href="https://github.com/pedroseabra27/Sistema-de-Moeda-Estudantil/pull/3">Refatorações sugeridas</a> |
+    | <a href="https://github.com/betelguelse">Eddie Christian</a> | Centralizar Validação com Zod | <a href="https://github.com/pedroseabra27/Sistema-de-Moeda-Estudantil/pull/3">Refatorações sugeridas</a> |
+    | <a href="https://github.com/arthur-am">Arthur Araujo Mendonca</a> | Padronizar Criação com Role (`criarEmpresa`) |  <a href="https://github.com/pedroseabra27/Sistema-de-Moeda-Estudantil/pull/3">Refatorações sugeridas</a> |
 
 ---
 
